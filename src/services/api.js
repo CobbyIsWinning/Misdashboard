@@ -1,5 +1,5 @@
 
-// Mock API service using localStorage
+// Mock API service using localStorage (i do not have the api to the backend)
 const API_KEY = 'ecom_dashboard_products'
 
 export const getProducts = async () => {
