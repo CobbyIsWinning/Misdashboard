@@ -1,32 +1,191 @@
+const API_BASE_URL = 'http://your-django-api.com/api';
 
-// Mock API service using localStorage (i do not have the api to the backend)
-const API_KEY = 'ecom_dashboard_products'
+// Auth endpoints
+export const login = async (phone, password) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone, password }),
+    });
 
-export const getProducts = async () => {
-  const products = JSON.parse(localStorage.getItem(API_KEY)) || []
-  return products
-}
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
+    }
+
+    const data = await response.json();
+    return data; // { token, user }
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const logout = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('user');
+};
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+// Vendor endpoints
+export const getVendors = async (searchQuery = '') => {
+  const token = localStorage.getItem('authToken');
+  const url = searchQuery 
+    ? `${API_BASE_URL}/vendors/?search=${encodeURIComponent(searchQuery)}`
+    : `${API_BASE_URL}/vendors/`;
+
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch vendors');
+  return await response.json();
+};
+
+export const getVendorById = async (id) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/vendors/${id}/`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch vendor');
+  return await response.json();
+};
+
+export const createVendor = async (vendorData) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/vendors/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(vendorData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to create vendor');
+  }
+  return await response.json();
+};
+
+export const updateVendor = async (id, vendorData) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/vendors/${id}/`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(vendorData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to update vendor');
+  }
+  return await response.json();
+};
+
+export const deleteVendor = async (id) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/vendors/${id}/`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to delete vendor');
+};
+
+// Product endpoints - Added to fix the missing exports
+export const getProducts = async (searchQuery = '') => {
+  const token = localStorage.getItem('authToken');
+  const url = searchQuery 
+    ? `${API_BASE_URL}/products/?search=${encodeURIComponent(searchQuery)}`
+    : `${API_BASE_URL}/products/`;
+
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch products');
+  return await response.json();
+};
 
 export const getProductById = async (id) => {
-  const products = await getProducts()
-  return products.find(p => p.id === id)
-}
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
 
-export const createProduct = async (product) => {
-  const products = await getProducts()
-  const newProduct = { ...product, id: Date.now().toString() }
-  localStorage.setItem(API_KEY, JSON.stringify([...products, newProduct]))
-  return newProduct
-}
+  if (!response.ok) throw new Error('Failed to fetch product');
+  return await response.json();
+};
 
-export const updateProduct = async (id, product) => {
-  const products = await getProducts()
-  const updatedProducts = products.map(p => p.id === id ? product : p)
-  localStorage.setItem(API_KEY, JSON.stringify(updatedProducts))
-}
+export const createProduct = async (productData) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/products/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(productData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to create product');
+  }
+  return await response.json();
+};
+
+export const updateProduct = async (id, productData) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(productData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to update product');
+  }
+  return await response.json();
+};
 
 export const deleteProduct = async (id) => {
-  const products = await getProducts()
-  const filteredProducts = products.filter(p => p.id !== id)
-  localStorage.setItem(API_KEY, JSON.stringify(filteredProducts))
-}
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to delete product');
+};
+
+// Add other API endpoints as needed...
